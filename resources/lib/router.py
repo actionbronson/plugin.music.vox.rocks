@@ -108,6 +108,7 @@ class Context(object):
         self.cache = cache
         self.session = session
         self.vox_cloud_bearer_token = vox_cloud_bearer_token
+        self.addon = addon
         self.addon_handle = addon_handle
         self.addon_url = addon_url
         self.addon_path = addon_path
