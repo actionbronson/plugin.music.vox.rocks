@@ -3,7 +3,10 @@
     <category label="Facebook Login">
         <setting label="Username" type="text" id="facebook_username" />
         <setting label="Password" type="text" id="facebook_password" option="hidden" />
-	</category>   
+	</category>
+    <category label="Proxy">
+        <setting label="Port" type="number" id="proxy_port" default="59876" />
+	</category>    
     <category label="VOX Actions">
         <setting label="Reload Cache" type="action" action="RunScript($CWD/resources/lib/reloadcache.py,full)" default="" />
         <setting label="Facebook Logout" type="action" action="RunScript($CWD/resources/lib/logout.py,full)" default="" />

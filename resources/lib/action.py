@@ -12,6 +12,7 @@ class XbmcPlayTracks(XbmcAction):
     def perform(self, context, args):
         playlist = xbmc.PlayList(xbmc.PLAYLIST_MUSIC)
         playlist.clear()
+        addon = context.addon
         album_id = args['album_id']
         album: VoxAlbum = context.cache.albums[album_id]
         context.cache.fetch_tracks(album_id)
@@ -25,7 +26,7 @@ class XbmcPlayTracks(XbmcAction):
             xbmc.log(f"adding url: {url}, track: {str(track)}", xbmc.LOGINFO)
             list_item = xbmcgui.ListItem(track.name)
             list_item.setInfo('music', dict(tracknumber=track.track_number,title=track.name,discnumber=track.disc_number,artist=track.artist,mediatype='song'))
-            artwork_url = f"http://localhost:59876/{album.artwork_url}"
+            artwork_url = f"http://localhost:{addon.getSetting('proxy_port')}/{album.artwork_url}"
             list_item.setArt({'thumb': artwork_url, 'icon': artwork_url, 'banner': artwork_url, 'clearart': artwork_url, 'clearlogo':artwork_url})
             playlist.add(url, list_item)
         xbmc.Player().play(playlist)
@@ -34,15 +35,54 @@ class XbmcListAlbums(XbmcAction):
     def perform(self, context, args):
         items = []
         cache: VoxLibraryCache = context.cache
-        for album in cache.albums.values():
-            artwork_url = f"http://localhost:59876/{album.artwork_url}"
+        addon = context.addon
+        all_albums = list(cache.albums.values())
+        xbmc.log(f"Will display {len(all_albums)} albums.", xbmc.LOGINFO)
+        for album in reversed(all_albums):
+            artwork_url = f"http://localhost:{addon.getSetting('proxy_port')}/{album.artwork_url}"
             artist_name = cache.artists[album.artist_id].name
             list_item = xbmcgui.ListItem(album.name, artist_name)
-            #xbmc.log(f"Artwork URL: {artwork_url}", xbmc.LOGINFO)
+            xbmc.log(f"Will try to proxy the album artwork '{album.name}' to '{artwork_url}'", xbmc.LOGINFO)
             list_item.setArt({'thumb': artwork_url, 'icon': artwork_url, 'banner': artwork_url, 'clearart': artwork_url, 'clearlogo':artwork_url})
             list_item.setIsFolder(True)
             list_item.setProperties(dict(id=album.id, IsPlayable=False))
             list_item.setInfo('music', dict(album=album.name,artist=artist_name,year=album.release_year,mediatype='album'))
+            list_item_url = f"{context.addon_url}?action=list&type=album&album={album.name}&album_id={album.id}"
+            items.append((list_item_url, list_item, True))
+        ok = xbmcplugin.addDirectoryItems(context.addon_handle, items, len(items))
+        xbmcplugin.endOfDirectory(context.addon_handle, True)
+
+class XbmcListArtists(XbmcAction):
+    def perform(self, context, args):
+        items = []
+        cache: VoxLibraryCache = context.cache
+        addon = context.addon
+        for artist in sorted(cache.artists.values(), key=lambda a: a.name):
+            list_item = xbmcgui.ListItem(artist.name)
+            #list_item.setArt({'thumb': artwork_url, 'icon': artwork_url, 'banner': artwork_url, 'clearart': artwork_url, 'clearlogo':artwork_url})
+            list_item.setIsFolder(True)
+            list_item.setProperties(dict(id=artist.id, IsPlayable=False))
+            list_item.setInfo('music', dict(artist=artist.name,mediatype='artist'))
+            list_item_url = f"{context.addon_url}?action=list&type=artist&artist={artist.name}&artist_id={artist.id}"
+            items.append((list_item_url, list_item, True))
+        ok = xbmcplugin.addDirectoryItems(context.addon_handle, items, len(items))
+        xbmcplugin.endOfDirectory(context.addon_handle, True)
+
+class XbmcListArtist(XbmcAction):
+    def perform(self, context, args):
+        items = []
+        artist, artist_id = args['artist'], args['artist_id']
+        addon = context.addon
+        cache: VoxLibraryCache = context.cache
+        albums: list(VoxAlbum) = cache.artist_to_albums[artist_id]
+        #addon = context.addon
+        for album in sorted(albums, key=lambda a: (a.release_year, a.name)):
+            list_item = xbmcgui.ListItem(album.name)
+            artwork_url = f"http://localhost:{addon.getSetting('proxy_port')}/{album.artwork_url}"
+            xbmc.log(f"Will try to proxy the album artwork '{album.name}' to '{artwork_url}'", xbmc.LOGINFO)
+            list_item.setArt({'thumb': artwork_url, 'icon': artwork_url, 'banner': artwork_url, 'clearart': artwork_url, 'clearlogo':artwork_url})
+            list_item.setProperties(dict(id=album.id, IsPlayable=False))
+            list_item.setInfo('music', dict(album=album.name,artist=artist,year=album.release_year,mediatype='album'))
             list_item_url = f"{context.addon_url}?action=list&type=album&album={album.name}&album_id={album.id}"
             items.append((list_item_url, list_item, True))
         ok = xbmcplugin.addDirectoryItems(context.addon_handle, items, len(items))
@@ -76,9 +116,15 @@ class XbmcActionFactory(object):
         if args['action'].lower() == 'list' and args['type'].lower() == 'albums':
             xbmc.log(f"Listing all albums", xbmc.LOGINFO)
             return XbmcListAlbums()
+        elif args['action'].lower() == 'list' and args['type'].lower() == 'artists':
+            xbmc.log(f"Listing all artists", xbmc.LOGINFO)
+            return XbmcListArtists()            
         elif args['action'].lower() == 'list' and args['type'].lower() == 'album':
             xbmc.log(f"Listing an album", xbmc.LOGINFO)
             return XbmcListAlbum()
+        elif args['action'].lower() == 'list' and args['type'].lower() == 'artist':
+            xbmc.log(f"Listing an artist", xbmc.LOGINFO)
+            return XbmcListArtist()                 
         elif args['action'].lower() == 'play':
             xbmc.log(f"Playing tracks", xbmc.LOGINFO)            
             return XbmcPlayTracks()

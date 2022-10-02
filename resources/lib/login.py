@@ -25,7 +25,7 @@ class VoxOAuthLogin(object):
                         "redirect_uri=com.coppertino.voxcloud%3A%2F%2Foauth")
         try:
             xbmc.log(f"Trying to obtain VOX OAuth code from url '{vox_oauth_code}'", xbmc.LOGINFO)
-            premium_oauth_code_resp = self.session.get(vox_oauth_code)
+            premium_oauth_code_resp = self.session.get(vox_oauth_code, headers={'Accept': 'application/json'})
             premium_oauth_code_resp.raise_for_status()
             xbmc.log(f"Obtained VOX Premium OAuth code: '${premium_oauth_code_resp.json()}'", xbmc.LOGINFO)
         except requests.exceptions.HTTPError as e:
