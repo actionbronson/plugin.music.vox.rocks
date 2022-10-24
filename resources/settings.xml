@@ -6,6 +6,9 @@
 	</category>
     <category label="Proxy">
         <setting label="Port" type="number" id="proxy_port" default="59876" />
+	</category>
+    <category label="PLaylists">
+        <setting label="Group By Albums" type="boolean" id="playlist_group_album" default="true" />
 	</category>    
     <category label="VOX Actions">
         <setting label="Reload Cache" type="action" action="RunScript($CWD/resources/lib/reloadcache.py,full)" default="" />

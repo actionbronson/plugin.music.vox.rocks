@@ -34,23 +34,29 @@ import re
 # Check python version to set the object that can detect non unicode strings
 if sys.version_info >= (3, 0):
     import xml.etree.ElementTree as Etree
+
     # noinspection PyUnresolvedReferences,PyCompatibility
     from html.parser import HTMLParser
+
     # noinspection PyUnresolvedReferences, PyCompatibility
     from html.entities import name2codepoint
+
     # Python2 compatibility
     _chr = chr
 else:
     # noinspection PyUnresolvedReferences,PyCompatibility
     from HTMLParser import HTMLParser
+
     # noinspection PyUnresolvedReferences, PyCompatibility
     from htmlentitydefs import name2codepoint
+
     # noinspection PyUnresolvedReferences
     _chr = unichr
 
     try:
         # This attemps to import the C version of ElementTree
         import xml.etree.cElementTree as Etree
+
         # This will fail if the implementation is broken
         Etree.Comment("Test for broken cElementTree")
     except (ImportError, TypeError):
@@ -196,6 +202,7 @@ class HTMLement(object):
     .. _Xpath: https://docs.python.org/3.6/library/xml.etree.elementtree.html#xpath-support
     __ XPath_
     """
+
     def __init__(self, tag="", attrs=None, encoding=None):
         self._parser = ParseHTML(tag, attrs)
         self.encoding = encoding
@@ -257,7 +264,7 @@ class HTMLement(object):
         end_head_tag = data.find(b"</head>")
         if end_head_tag:
             # Search for the charset attribute within the meta tags
-            charset_refind = b'<meta.+?charset=[\'"]*(.+?)["\'].*?>'
+            charset_refind = b"<meta.+?charset=['\"]*(.+?)[\"'].*?>"
             charset = re.search(charset_refind, data[:end_head_tag], re.IGNORECASE)
             if charset:
                 self.encoding = encoding = charset.group(1).decode()
@@ -295,14 +302,41 @@ class ParseHTML(HTMLParser):
 
         # Some tags in html do not require closing tags so thoes tags will need to be auto closed (Void elements)
         # Refer to: https://www.w3.org/TR/html/syntax.html#void-elements
-        self._voids = frozenset(("area", "base", "br", "col", "hr", "img", "input", "link", "meta", "param",
-                                 # Only in HTML5
-                                 "embed", "keygen", "source", "track",
-                                 # Not supported in HTML5
-                                 "basefont", "frame", "isindex",
-                                 # SVG self closing tags
-                                 "rect", "circle", "ellipse", "line", "polyline", "polygon",
-                                 "path", "stop", "use", "image", "animatetransform"))
+        self._voids = frozenset(
+            (
+                "area",
+                "base",
+                "br",
+                "col",
+                "hr",
+                "img",
+                "input",
+                "link",
+                "meta",
+                "param",
+                # Only in HTML5
+                "embed",
+                "keygen",
+                "source",
+                "track",
+                # Not supported in HTML5
+                "basefont",
+                "frame",
+                "isindex",
+                # SVG self closing tags
+                "rect",
+                "circle",
+                "ellipse",
+                "line",
+                "polyline",
+                "polygon",
+                "path",
+                "stop",
+                "use",
+                "image",
+                "animatetransform",
+            )
+        )
 
         # Create temporary root element to protect from badly written sites that either
         # have no html starting tag or multiple top level elements
@@ -400,7 +434,9 @@ class ParseHTML(HTMLParser):
     def close(self):
         self._flush()
         if self.enabled == 0:
-            msg = "Unable to find requested section with tag of '{}' and attributes of {}"
+            msg = (
+                "Unable to find requested section with tag of '{}' and attributes of {}"
+            )
             raise RuntimeError(msg.format(self.tag, self.attrs))
         elif self._root is not None:
             return self._root
