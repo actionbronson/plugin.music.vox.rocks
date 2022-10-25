@@ -10,6 +10,7 @@ class XbmcListAlbum(XbmcAction):
     def perform(self, context, args):
         items = []
         cache: VoxLibraryCache = context.cache
+        addon = context.addon
         album, album_id = args["album"], args["album_id"]
         xbmc.log(
             f"Fetching tracks for album: '{album}', id: '{album_id}'", xbmc.LOGINFO
