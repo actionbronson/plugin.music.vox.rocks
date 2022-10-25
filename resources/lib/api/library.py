@@ -24,12 +24,10 @@ class VoxLibraryCache(VoxAccess):
         self.artists = artists
         self.albums = albums
         self.playlists = playlists
-        self.artist_to_albums = self._build_artist_to_albums_rel()
         self.cloud = VoxCloud(session, vox_bearer_token)
+        
         if reload:
-            self.albums = {}
-            self.artists = {}
-            self.playlists = {}
+            self.albums, self.artists, self.playlists = {}, {}, {}
             self._generic_vox_api_fetcher(
                 "https://api.vox.rocks/api/artists", self._add_artists
             )
@@ -42,14 +40,19 @@ class VoxLibraryCache(VoxAccess):
             self._generic_vox_api_fetcher(
                 "https://api.vox.rocks/api/playlistitems", self._add_playlist_items
             )
-            self.artist_to_albums = self._build_artist_to_albums_rel()
 
-    def _build_artist_to_albums_rel(self):
+        self.artist_to_albums = self._build_artist_to_albums_view()
+        self.albums_by_name = self._build_albums_by_name_view()
+
+    def _build_artist_to_albums_view(self):
         artist_to_albums = {}
         for album in self.albums.values():
             albums = artist_to_albums.setdefault(album.artist_id, [])
             albums.append(album)
         return artist_to_albums
+
+    def _build_albums_by_name_view(self):
+        return {album.name: album for album in self.albums.values()}
 
     @staticmethod
     def from_file(session, vox_bearer_token, albums_file, artists_file, playlists_file):
