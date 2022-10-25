@@ -25,7 +25,7 @@ class VoxLibraryCache(VoxAccess):
         self.albums = albums
         self.playlists = playlists
         self.cloud = VoxCloud(session, vox_bearer_token)
-        
+
         if reload:
             self.albums, self.artists, self.playlists = {}, {}, {}
             self._generic_vox_api_fetcher(

@@ -17,9 +17,7 @@ class XbmcListAlbum(XbmcAction):
         )
         cache.get_album_tracks(album_id)
         tracks = cache.albums[album_id].tracks
-        artwork_url = (
-            f"http://localhost:{addon.getSetting('proxy_port')}/{cache.albums[album_id].artwork_url}"
-        )        
+        artwork_url = f"http://localhost:{addon.getSetting('proxy_port')}/{cache.albums[album_id].artwork_url}"
         items = []
         i = 0
         for track in tracks:
@@ -33,7 +31,7 @@ class XbmcListAlbum(XbmcAction):
                     "clearart": artwork_url,
                     "clearlogo": artwork_url,
                 }
-            )            
+            )
             list_item.setInfo(
                 "music", dict(album=album, artist=track.artist, mediatype="song")
             )

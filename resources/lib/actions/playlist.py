@@ -15,7 +15,7 @@ class XbmcPlayTracksFromPlaylist(XbmcAction):
         vox_playlist: VoxPlaylist = context.cache.playlists[playlist_id]
         for track_descriptor in track_item_ids:
             xbmc.log(track_descriptor, xbmc.LOGINFO)
-            track_item_id, artwork_url = track_descriptor.split(';')           
+            track_item_id, artwork_url = track_descriptor.split(";")
             file_desc = context.cache.cloud.download_track(track_item_id)
             playlist_item: VoxPlaylistItem = [
                 i for i in vox_playlist.items if i.file_item_id == track_item_id
@@ -31,7 +31,7 @@ class XbmcPlayTracksFromPlaylist(XbmcAction):
                     "clearart": artwork_url,
                     "clearlogo": artwork_url,
                 }
-            )            
+            )
             list_item.setInfo(
                 "music",
                 dict(
@@ -65,7 +65,7 @@ class XbmcListPlaylists(XbmcAction):
 class XbmcListPlaylist(XbmcAction):
     def guess_album(self, context, album_name):
         return context.cache.albums_by_name[album_name]
-    
+
     def perform(self, context, args):
         items = []
         addon = context.addon
@@ -84,7 +84,7 @@ class XbmcListPlaylist(XbmcAction):
             album: VoxAlbum = context.cache.albums_by_name[item.album_name]
             artwork_url = (
                 f"http://localhost:{addon.getSetting('proxy_port')}/{album.artwork_url}"
-            )                  
+            )
             list_item.setArt(
                 {
                     "thumb": artwork_url,
