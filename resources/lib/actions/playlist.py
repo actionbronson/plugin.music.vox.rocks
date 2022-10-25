@@ -1,3 +1,4 @@
+from resources.lib.models.vox_album import VoxAlbum
 from resources.lib.models.vox_playlist import VoxPlaylist, VoxPlaylistItem
 from resources.lib.actions import XbmcAction
 from resources.lib.api.library import VoxLibraryCache
@@ -12,7 +13,9 @@ class XbmcPlayTracksFromPlaylist(XbmcAction):
         playlist_id = args["playlist_id"]
         track_item_ids = args["track_item_ids"].split(",")
         vox_playlist: VoxPlaylist = context.cache.playlists[playlist_id]
-        for track_item_id in track_item_ids:
+        for track_descriptor in track_item_ids:
+            xbmc.log(track_descriptor, xbmc.LOGINFO)
+            track_item_id, artwork_url = track_descriptor.split(';')           
             file_desc = context.cache.cloud.download_track(track_item_id)
             playlist_item: VoxPlaylistItem = [
                 i for i in vox_playlist.items if i.file_item_id == track_item_id
@@ -20,6 +23,15 @@ class XbmcPlayTracksFromPlaylist(XbmcAction):
             url = f"http://{file_desc['url']}&d{file_desc['dataSHA1']}&b{file_desc['deltaSHA1']}"
             xbmc.log(f"Adding url: {url}, track: {str(playlist_item)}", xbmc.LOGINFO)
             list_item = xbmcgui.ListItem(playlist_item.name)
+            list_item.setArt(
+                {
+                    "thumb": artwork_url,
+                    "icon": artwork_url,
+                    "banner": artwork_url,
+                    "clearart": artwork_url,
+                    "clearlogo": artwork_url,
+                }
+            )            
             list_item.setInfo(
                 "music",
                 dict(
@@ -51,8 +63,12 @@ class XbmcListPlaylists(XbmcAction):
 
 
 class XbmcListPlaylist(XbmcAction):
+    def guess_album(self, context, album_name):
+        return context.cache.albums_by_name[album_name]
+    
     def perform(self, context, args):
         items = []
+        addon = context.addon
         cache: VoxLibraryCache = context.cache
         playlist, playlist_id = args["playlist"], args["playlist_id"]
         xbmc.log(
@@ -63,15 +79,27 @@ class XbmcListPlaylist(XbmcAction):
         i = 0
         playable_items = sorted(playlist.items, key=lambda x: x.order_number)
         for item in playable_items:
-            # xbmc.log(str(item), xbmc.LOGINFO)
             list_item = xbmcgui.ListItem(item.name)
+            # no album_id, let's try to figure it out from the ids and album_name ...
+            album: VoxAlbum = context.cache.albums_by_name[item.album_name]
+            artwork_url = (
+                f"http://localhost:{addon.getSetting('proxy_port')}/{album.artwork_url}"
+            )                  
+            list_item.setArt(
+                {
+                    "thumb": artwork_url,
+                    "icon": artwork_url,
+                    "banner": artwork_url,
+                    "clearart": artwork_url,
+                    "clearlogo": artwork_url,
+                }
+            )
             list_item.setProperties(dict(id=item.id, IsPlayable=True))
             list_item.setInfo(
                 "music",
                 dict(album=item.album_name, artist=item.artist_name, mediatype="song"),
             )
-            # xbmc.log(f"Encoding {json.dumps(item.raw)}", xbmc.LOGINFO)
-            list_item_url = f"{context.addon_url}?action=play&track_item_ids={','.join([t.file_item_id for t in playable_items[i:]])}&playlist_id={playlist_id}"
+            list_item_url = f"""{context.addon_url}?action=play&track_item_ids={','.join([f"{t.file_item_id};{artwork_url}" for t in playable_items[i:]])}&playlist_id={playlist_id}"""
             items.append((list_item_url, list_item, True))
             i += 1
         ok = xbmcplugin.addDirectoryItems(context.addon_handle, items, len(items))

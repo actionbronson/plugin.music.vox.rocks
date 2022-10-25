@@ -16,11 +16,23 @@ class XbmcListAlbum(XbmcAction):
         )
         cache.get_album_tracks(album_id)
         tracks = cache.albums[album_id].tracks
+        artwork_url = (
+            f"http://localhost:{addon.getSetting('proxy_port')}/{cache.albums[album_id].artwork_url}"
+        )        
         items = []
         i = 0
         for track in tracks:
             list_item = xbmcgui.ListItem(track.name)
             list_item.setProperties(dict(id=track.id, IsPlayable=True))
+            list_item.setArt(
+                {
+                    "thumb": artwork_url,
+                    "icon": artwork_url,
+                    "banner": artwork_url,
+                    "clearart": artwork_url,
+                    "clearlogo": artwork_url,
+                }
+            )            
             list_item.setInfo(
                 "music", dict(album=album, artist=track.artist, mediatype="song")
             )
